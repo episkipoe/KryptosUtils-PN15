@@ -1,0 +1,19 @@
+Cipher alphabet:  A L W H S E P B M X I T F Q C N Y J U G R D O Z K  V
+                  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4  5
+                                      1                   2
+
+Plain alphabet:        0  1  2  3  4  5  6  7  8  9
+                    0  x  E  x  A  x  S  I  U  x  D
+                    1  R  J  N  F  C  K  T  Z  L  W
+                    2  H  Y  P  Q  O  B  G  x  M  X
+                    3  V  x
+
+
+    c   AT  JK    LU  DI  AW    IN   FB     NY   PV    TT  MZ    FP  KW    GD
+        11   9    19  31   2     5   11     31   31    0   31    10   26    6
+
+    k    L    *     R     Q    Q    L    P      B     B    I     F      O   *      R 
+         1         20    13   13    1    6       7      7    10   12    22        20
+
+   p    FU sa    RF  OR   CE   SE    UR    BE    RL  IN   BR   IG  ad    EW
+        10  6    7   18   15    4    13    24    24  10   19   28  10    18
