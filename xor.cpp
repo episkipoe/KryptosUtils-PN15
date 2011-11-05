@@ -148,6 +148,42 @@ struct Digraphs {
 	}
 };
 
+int incr_idx(vector<Digraphs> & solutions, vector<int> & cur_positions) {
+	int num_incr=0;
+	for(size_t i = 0 ; i < cur_positions.size() ; i++) {
+		if(cur_positions[i]<solutions[i].values.size()) { 
+			num_incr++;
+			cur_positions[i]++; 
+		}
+	}
+return num_incr;
+	size_t incr_idx = solutions.size()-1;
+	cur_positions[incr_idx]++;
+	for(int i = incr_idx ; i >= 0 ; i--) {
+		if(cur_positions[i]==solutions[i].values.size()) {
+			cur_positions[i]=0;
+			if(i>0) cur_positions[i-1]++;
+		}	
+	}
+
+}
+
+void print_digraphs(vector<Digraphs> & solutions, vector<int> & cur_positions) {
+	printf("P: ");
+	for(size_t i = 0 ; i < solutions.size() ; i++) {
+		printf("%s\t", solutions[i].values[cur_positions[i]].c_str());	
+	}
+	printf("\n");
+}
+
+void print_permutations(vector<Digraphs> & solutions) {
+	vector<int> cur_positions(solutions.size());
+	while(1) {
+		print_digraphs(solutions, cur_positions);
+		if(!incr_idx(solutions, cur_positions)) break;
+	}
+}
+
 int main(int argc, char * argv[]) {
 	map<int,Digraphs> value_to_digraph;
 	vector<int> results;
@@ -164,7 +200,7 @@ int main(int argc, char * argv[]) {
 			digraph[1]=s;
 			digraph[2]=0;
 			value_to_digraph[result].values.push_back(digraph);
-			if(result==24) printf("%c%c\n", f, s);
+			//if(result==24) printf("%c%c\n", f, s);
 			//printf("%c%c : %i , %i :  %i = %s\n", f, s, first_number, second_number, result, digraph);
 			bool u = true;
 			for(size_t i = 0 ; i < results.size() ; i++) {
@@ -176,6 +212,7 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
+	vector<Digraphs> solutions;
 	int key_pos=0;	
 	while(cin>>first_char>>second_char) {
 		int num = twoCharsToNumber(first_char, second_char);
@@ -186,10 +223,12 @@ int main(int argc, char * argv[]) {
 			plain_int = num ^ key_int;
 			printf("c %c%c (%i) = k %c (%i) = p %i\n", first_char, second_char, num, key, key_int, plain_int);
 			value_to_digraph[plain_int].print_options();
+			solutions.push_back(value_to_digraph[plain_int]);
 		} else {
 			printf("c %c%c (%i) \n", first_char, second_char, num);
 			printf("**\n");
 		}
 		key_pos++;	
 	}
+	print_permutations(solutions);
 }
