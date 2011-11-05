@@ -1,0 +1,1 @@
+g++ -o dekrypt kryptos.cpp && ./dekrypt < keyd

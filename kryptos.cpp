@@ -1,9 +1,20 @@
+/**  The key is read from a file called "key"
+ **  The cipher-text is read from stdin
+**/
+
 #include <map>
 #include <vector>
 #include <string>
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 using namespace std;
+
+/*
+Cipher alphabet:  A L W H S E P B M X I T F Q C N Y J U G R D O Z K V
+				      1                   2
+                  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+*/
 
 unsigned int letterToCipher(char letter) {
 	switch(letter) {
@@ -36,46 +47,16 @@ unsigned int letterToCipher(char letter) {
 	}
 }
 
-unsigned int reverseBits(unsigned int num) {
-    unsigned int  NO_OF_BITS = sizeof(num) * 8;
-    unsigned int reverse_num = 0, i, temp;
  
-    for (i = 0; i < NO_OF_BITS; i++)
-    {
-        temp = (num & (1 << i));
-        if(temp)
-            reverse_num |= (1 << ((NO_OF_BITS - 1) - i));
-    }
- 
-    return reverse_num;
-}
- 
-
+/*
+ *  Given a digraph return the xor of the two numbers that the letters represent
+*/
 int twoCharsToNumber(char first_char, char second_char) {
 	int first_num = letterToCipher(first_char);
 	int second_num = letterToCipher(second_char);
 	int result = first_num^second_num;
 	//printf("%c %c : %i xor %i = %i\n", first_char, second_char, first_num, second_num, result);		
 	return result;
-}
-
-char positionToKey(int pos) {
-	switch(pos) {
-		case 0: return 'L';
-		case 1: return '*';
-		case 2: return 'R';
-		case 3: return 'Q';		
-		case 4: return 'Q';		
-		case 5: return 'L';		
-		case 6: return 'P';		
-		case 7: return 'B';		
-		case 8: return 'B';		
-		case 9: return 'I';		
-		case 10: return 'F';		
-		case 11: return 'O';		
-		case 12: return '*';		
-		case 13: return 'R';
-	}
 }
 
 char numberToPlainText(int number) {
@@ -109,6 +90,9 @@ char numberToPlainText(int number) {
 	}
 }
 
+/*
+ * Transcribed from Elonka's spreadsheet
+*/
 int plainTextToNumber(char plain_text) {
 	switch(plain_text) {
 		case 'A': return 3;
@@ -148,24 +132,37 @@ struct Digraphs {
 	}
 };
 
+/*
+ * Show each possible digraph only once per position
+*/
 int incr_idx(vector<Digraphs> & solutions, vector<int> & cur_positions) {
 	int num_incr=0;
 	for(size_t i = 0 ; i < cur_positions.size() ; i++) {
-		if(cur_positions[i]<solutions[i].values.size()) { 
+		if(cur_positions[i]<solutions[i].values.size()-1) { 
 			num_incr++;
 			cur_positions[i]++; 
 		}
 	}
-return num_incr;
+	return num_incr;
+}
+
+/*
+ * Run through every permutation (intractable for non-trivial input)
+*/
+int next_idx(vector<Digraphs> & solutions, vector<int> & cur_positions) {
 	size_t incr_idx = solutions.size()-1;
 	cur_positions[incr_idx]++;
 	for(int i = incr_idx ; i >= 0 ; i--) {
 		if(cur_positions[i]==solutions[i].values.size()) {
 			cur_positions[i]=0;
-			if(i>0) cur_positions[i-1]++;
+			if(i>0) {
+				cur_positions[i-1]++;
+			} else {
+				return 0;
+			}
 		}	
 	}
-
+	return 1;
 }
 
 void print_digraphs(vector<Digraphs> & solutions, vector<int> & cur_positions) {
@@ -181,14 +178,22 @@ void print_permutations(vector<Digraphs> & solutions) {
 	while(1) {
 		print_digraphs(solutions, cur_positions);
 		if(!incr_idx(solutions, cur_positions)) break;
+		//if(!next_idx(solutions, cur_positions)) break;
 	}
 }
 
 int main(int argc, char * argv[]) {
+	//read the key
+	string key_str;
+	ifstream key_stream("key");
+	key_stream>>key_str;
+
+	/*
+	*  Build a look-up table which maps the plaintext number to the corresponding digraph  
+	*  (based on xor'd five digit binary numbers)
+	*/
 	map<int,Digraphs> value_to_digraph;
-	vector<int> results;
-	char first_char, second_char;
-	int total=0, unique=0;
+	value_to_digraph[-1].values.push_back("**");
 	for(char f = 'A' ; f <= 'Z'; f++) {
 		for(char s = 'A' ; s <= 'Z'; s++) {
 			int first_number = plainTextToNumber(f);
@@ -202,32 +207,30 @@ int main(int argc, char * argv[]) {
 			value_to_digraph[result].values.push_back(digraph);
 			//if(result==24) printf("%c%c\n", f, s);
 			//printf("%c%c : %i , %i :  %i = %s\n", f, s, first_number, second_number, result, digraph);
-			bool u = true;
-			for(size_t i = 0 ; i < results.size() ; i++) {
-				if(results[i]==result) u = false;	
-			}
-			results.push_back(result);
-			total++;
-			if(u) unique++;
 		}
 	}
 
+	/*
+	 *  Read cipher-text digraphs from stdin apply the key and produce possible plaintext values
+	*/
 	vector<Digraphs> solutions;
 	int key_pos=0;	
+	char first_char, second_char;
 	while(cin>>first_char>>second_char) {
 		int num = twoCharsToNumber(first_char, second_char);
-		char key = positionToKey(key_pos);
+		char key_char = key_str[key_pos];
 		int key_int, plain_int ;
-		if(key != '*') {
-			key_int = letterToCipher(key);
+		if(key_char != '*') {
+			key_int = letterToCipher(key_char);
 			plain_int = num ^ key_int;
-			printf("c %c%c (%i) = k %c (%i) = p %i\n", first_char, second_char, num, key, key_int, plain_int);
+			printf("c %c%c (%i) = k %c (%i) = p %i\n", first_char, second_char, num, key_char, key_int, plain_int);
 			value_to_digraph[plain_int].print_options();
-			solutions.push_back(value_to_digraph[plain_int]);
 		} else {
+			plain_int = -1;
 			printf("c %c%c (%i) \n", first_char, second_char, num);
 			printf("**\n");
 		}
+		solutions.push_back(value_to_digraph[plain_int]);
 		key_pos++;	
 	}
 	print_permutations(solutions);
